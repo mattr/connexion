@@ -1,0 +1,23 @@
+# macOS and editor metadata
+.DS_Store
+.idea/
+
+# PocketBase runtime data and generated frontend bundle
+/pb_data/
+/pb_public/*
+!/pb_public/.keep
+
+# SvelteKit / Node frontend workspace
+node_modules/
+/client/.svelte-kit/
+/client/build/
+/client/dist/
+/client/.vite/
+/client/.env
+/client/.env.*
+!/client/.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
