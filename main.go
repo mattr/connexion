@@ -7,10 +7,36 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/osutils"
 )
 
 func main() {
+	app := newApp()
+
+	if err := app.Start(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func newApp() *pocketbase.PocketBase {
 	app := pocketbase.New()
+
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		Automigrate: osutils.IsProbablyGoRun(),
+	})
+
+	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
+		if err := e.Next(); err != nil {
+			return err
+		}
+
+		if isMigrateCommand(os.Args) {
+			return nil
+		}
+
+		return e.App.RunAppMigrations()
+	})
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		// serves static files from the provided public dir (if exists)
@@ -19,7 +45,15 @@ func main() {
 		return se.Next()
 	})
 
-	if err := app.Start(); err != nil {
-		log.Fatal(err)
+	return app
+}
+
+func isMigrateCommand(args []string) bool {
+	for _, arg := range args[1:] {
+		if arg == "migrate" {
+			return true
+		}
 	}
+
+	return false
 }
