@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/mattr/connexion/migrations"
+
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -20,7 +22,11 @@ func main() {
 }
 
 func newApp() *pocketbase.PocketBase {
-	app := pocketbase.New()
+	return newAppWithConfig(pocketbase.Config{})
+}
+
+func newAppWithConfig(config pocketbase.Config) *pocketbase.PocketBase {
+	app := pocketbase.NewWithConfig(config)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Automigrate: osutils.IsProbablyGoRun(),
