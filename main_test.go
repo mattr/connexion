@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
+	"github.com/mattr/connexion/internal/contactmethods"
 	"github.com/mattr/connexion/internal/people"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -107,6 +109,42 @@ func TestPersonJSONFieldNames(t *testing.T) {
 	}
 }
 
+func TestContactMethodJSONFieldNames(t *testing.T) {
+	t.Parallel()
+
+	method := contactmethods.ContactMethod{
+		ID:     "method-1",
+		Person: "person-1",
+		Kind:   contactmethods.KindWeb,
+		Label:  "GitHub",
+		Value:  "https://github.com/mattr",
+	}
+
+	data, err := json.Marshal(method)
+	if err != nil {
+		t.Fatalf("json.Marshal(ContactMethod) returned error: %v", err)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(ContactMethod) returned error: %v", err)
+	}
+
+	want := map[string]string{
+		"id":     "method-1",
+		"person": "person-1",
+		"kind":   "web",
+		"label":  "GitHub",
+		"value":  "https://github.com/mattr",
+	}
+
+	for key, wantValue := range want {
+		if got[key] != wantValue {
+			t.Fatalf("ContactMethod JSON field %q = %q, want %q", key, got[key], wantValue)
+		}
+	}
+}
+
 func TestPeopleMigration(t *testing.T) {
 	t.Parallel()
 
@@ -134,7 +172,46 @@ func TestPeopleMigration(t *testing.T) {
 	assertTextField(t, collection, people.FieldNickname, false)
 }
 
+func TestContactMethodsMigration(t *testing.T) {
+	t.Parallel()
+
+	app := newAppWithConfig(pocketbase.Config{
+		DefaultDataDir: t.TempDir(),
+		DefaultDev:     false,
+	})
+	t.Cleanup(func() {
+		if err := app.ResetBootstrapState(); err != nil {
+			t.Errorf("ResetBootstrapState() returned error: %v", err)
+		}
+	})
+
+	if err := app.Bootstrap(); err != nil {
+		t.Fatalf("Bootstrap() returned error: %v", err)
+	}
+
+	peopleCollection, err := app.FindCollectionByNameOrId(people.CollectionName)
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(%q) returned error: %v", people.CollectionName, err)
+	}
+
+	collection, err := app.FindCollectionByNameOrId(contactmethods.CollectionName)
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(%q) returned error: %v", contactmethods.CollectionName, err)
+	}
+
+	assertRelationField(t, collection, contactmethods.FieldPerson, peopleCollection.Id, true)
+	assertSelectField(t, collection, contactmethods.FieldKind, contactmethods.Kinds, true)
+	assertTextField(t, collection, contactmethods.FieldLabel, false)
+	assertTextFieldWithMax(t, collection, contactmethods.FieldValue, true, 5000)
+}
+
 func assertTextField(t *testing.T, collection *core.Collection, name string, required bool) {
+	t.Helper()
+
+	assertTextFieldWithMax(t, collection, name, required, 255)
+}
+
+func assertTextFieldWithMax(t *testing.T, collection *core.Collection, name string, required bool, max int) {
 	t.Helper()
 
 	field, ok := collection.Fields.GetByName(name).(*core.TextField)
@@ -146,7 +223,45 @@ func assertTextField(t *testing.T, collection *core.Collection, name string, req
 		t.Fatalf("field %q Required = %t, want %t", name, field.Required, required)
 	}
 
-	if field.Max != 255 {
-		t.Fatalf("field %q Max = %d, want 255", name, field.Max)
+	if field.Max != max {
+		t.Fatalf("field %q Max = %d, want %d", name, field.Max, max)
+	}
+}
+
+func assertRelationField(t *testing.T, collection *core.Collection, name string, collectionID string, required bool) {
+	t.Helper()
+
+	field, ok := collection.Fields.GetByName(name).(*core.RelationField)
+	if !ok {
+		t.Fatalf("field %q is not a relation field", name)
+	}
+
+	if field.CollectionId != collectionID {
+		t.Fatalf("field %q CollectionId = %q, want %q", name, field.CollectionId, collectionID)
+	}
+
+	if field.Required != required {
+		t.Fatalf("field %q Required = %t, want %t", name, field.Required, required)
+	}
+
+	if field.MaxSelect != 1 {
+		t.Fatalf("field %q MaxSelect = %d, want 1", name, field.MaxSelect)
+	}
+}
+
+func assertSelectField(t *testing.T, collection *core.Collection, name string, values []string, required bool) {
+	t.Helper()
+
+	field, ok := collection.Fields.GetByName(name).(*core.SelectField)
+	if !ok {
+		t.Fatalf("field %q is not a select field", name)
+	}
+
+	if field.Required != required {
+		t.Fatalf("field %q Required = %t, want %t", name, field.Required, required)
+	}
+
+	if !slices.Equal(field.Values, values) {
+		t.Fatalf("field %q Values = %v, want %v", name, field.Values, values)
 	}
 }
