@@ -1,7 +1,15 @@
 <script lang="ts">
+  import { filterPeople } from '$lib/people-filter';
   import type { PageData } from './$types';
 
   export let data: PageData;
+
+  let query = '';
+  $: filteredPeople = filterPeople(data.people, query);
+
+  function updateQuery(event: KeyboardEvent) {
+    query = event.currentTarget instanceof HTMLInputElement ? event.currentTarget.value : '';
+  }
 </script>
 
 <section class="page-header">
@@ -12,15 +20,27 @@
   <a class="button" href="/people/new">Add person</a>
 </section>
 
+{#if data.people.length > 0}
+  <label class="filter card">
+    Filter people
+    <input value={query} on:keyup={updateQuery} type="search" placeholder="Search by name or nickname" autocomplete="off" />
+  </label>
+{/if}
+
 {#if data.people.length === 0}
   <article class="card stack">
     <h2>No people yet</h2>
     <p class="muted">Add the first person to start building the address book.</p>
     <a class="button" href="/people/new">Add person</a>
   </article>
+{:else if filteredPeople.length === 0}
+  <article class="card stack">
+    <h2>No matches</h2>
+    <p class="muted">No people match “{query}”.</p>
+  </article>
 {:else}
   <div class="people-list">
-    {#each data.people as person}
+    {#each filteredPeople as person}
       <article class="person-card card">
         <a href={`/people/${person.id}`}>
           <strong>{person.name}</strong>
@@ -38,6 +58,10 @@
 {/if}
 
 <style>
+  .filter {
+    margin-bottom: 1rem;
+  }
+
   .people-list {
     display: grid;
     gap: 0.8rem;
