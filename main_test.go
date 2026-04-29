@@ -170,6 +170,7 @@ func TestPeopleMigration(t *testing.T) {
 	assertTextField(t, collection, people.FieldName, true)
 	assertTextField(t, collection, people.FieldSortName, false)
 	assertTextField(t, collection, people.FieldNickname, false)
+	assertAuthenticatedRules(t, collection)
 }
 
 func TestContactMethodsMigration(t *testing.T) {
@@ -203,6 +204,31 @@ func TestContactMethodsMigration(t *testing.T) {
 	assertSelectField(t, collection, contactmethods.FieldKind, contactmethods.Kinds, true)
 	assertTextField(t, collection, contactmethods.FieldLabel, false)
 	assertTextFieldWithMax(t, collection, contactmethods.FieldValue, true, 5000)
+	assertAuthenticatedRules(t, collection)
+}
+
+func assertAuthenticatedRules(t *testing.T, collection *core.Collection) {
+	t.Helper()
+
+	const authenticatedRule = "@request.auth.id != ''"
+
+	rules := map[string]*string{
+		"ListRule":   collection.ListRule,
+		"ViewRule":   collection.ViewRule,
+		"CreateRule": collection.CreateRule,
+		"UpdateRule": collection.UpdateRule,
+		"DeleteRule": collection.DeleteRule,
+	}
+
+	for name, rule := range rules {
+		if rule == nil {
+			t.Fatalf("%s is nil, want %q", name, authenticatedRule)
+		}
+
+		if *rule != authenticatedRule {
+			t.Fatalf("%s = %q, want %q", name, *rule, authenticatedRule)
+		}
+	}
 }
 
 func assertTextField(t *testing.T, collection *core.Collection, name string, required bool) {
@@ -242,6 +268,10 @@ func assertRelationField(t *testing.T, collection *core.Collection, name string,
 
 	if field.Required != required {
 		t.Fatalf("field %q Required = %t, want %t", name, field.Required, required)
+	}
+
+	if !field.CascadeDelete {
+		t.Fatalf("field %q CascadeDelete = false, want true", name)
 	}
 
 	if field.MaxSelect != 1 {

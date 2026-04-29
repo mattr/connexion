@@ -5,6 +5,7 @@ import (
 	"github.com/mattr/connexion/internal/people"
 	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
+	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 func init() {
@@ -15,12 +16,18 @@ func init() {
 		}
 
 		collection := core.NewBaseCollection(contactmethods.CollectionName)
+		collection.ListRule = types.Pointer(authenticatedRule)
+		collection.ViewRule = types.Pointer(authenticatedRule)
+		collection.CreateRule = types.Pointer(authenticatedRule)
+		collection.UpdateRule = types.Pointer(authenticatedRule)
+		collection.DeleteRule = types.Pointer(authenticatedRule)
 
 		collection.Fields.Add(&core.RelationField{
-			Name:         contactmethods.FieldPerson,
-			CollectionId: peopleCollection.Id,
-			MaxSelect:    1,
-			Required:     true,
+			Name:          contactmethods.FieldPerson,
+			CollectionId:  peopleCollection.Id,
+			CascadeDelete: true,
+			MaxSelect:     1,
+			Required:      true,
 		})
 		collection.Fields.Add(&core.SelectField{
 			Name:     contactmethods.FieldKind,
