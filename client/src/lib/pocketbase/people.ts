@@ -4,14 +4,13 @@ import type { Person, PersonInput } from './types';
 function compactPersonInput(input: PersonInput) {
   return {
     name: input.name.trim(),
-    sort_name: input.sort_name?.trim() || '',
     nickname: input.nickname?.trim() || ''
   };
 }
 
 export async function listPeople() {
   const records = await pb.collection('people').getFullList({
-    sort: '+sort_name,+name'
+    sort: '+name'
   });
 
   return records as unknown as Person[];

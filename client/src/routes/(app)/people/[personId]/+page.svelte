@@ -28,13 +28,6 @@
 </section>
 
 <section class="stack">
-  {#if data.person.sort_name}
-    <article class="card">
-      <strong>Sort name</strong>
-      <p>{data.person.sort_name}</p>
-    </article>
-  {/if}
-
   <article class="card stack">
     <div class="section-title">
       <div>

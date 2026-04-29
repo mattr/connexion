@@ -8,13 +8,11 @@
   export let onSubmit: (input: PersonInput) => Promise<void> | void;
 
   let name = person.name ?? '';
-  let sortName = person.sort_name ?? '';
   let nickname = person.nickname ?? '';
 
   async function submit() {
     await onSubmit({
       name,
-      sort_name: sortName,
       nickname
     });
   }
@@ -28,11 +26,6 @@
   <label>
     Name
     <input bind:value={name} maxlength="255" required autocomplete="name" />
-  </label>
-
-  <label>
-    Sort name
-    <input bind:value={sortName} maxlength="255" />
   </label>
 
   <label>

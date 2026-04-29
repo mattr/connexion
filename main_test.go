@@ -81,7 +81,6 @@ func TestPersonJSONFieldNames(t *testing.T) {
 	person := people.Person{
 		ID:       "person-1",
 		Name:     "Prince",
-		SortName: "Prince",
 		Nickname: "The Artist",
 	}
 
@@ -96,10 +95,9 @@ func TestPersonJSONFieldNames(t *testing.T) {
 	}
 
 	want := map[string]string{
-		"id":        "person-1",
-		"name":      "Prince",
-		"sort_name": "Prince",
-		"nickname":  "The Artist",
+		"id":       "person-1",
+		"name":     "Prince",
+		"nickname": "The Artist",
 	}
 
 	for key, wantValue := range want {
@@ -168,9 +166,17 @@ func TestPeopleMigration(t *testing.T) {
 	}
 
 	assertTextField(t, collection, people.FieldName, true)
-	assertTextField(t, collection, people.FieldSortName, false)
 	assertTextField(t, collection, people.FieldNickname, false)
+	assertNoField(t, collection, "sort_name")
 	assertAuthenticatedRules(t, collection)
+}
+
+func assertNoField(t *testing.T, collection *core.Collection, name string) {
+	t.Helper()
+
+	if field := collection.Fields.GetByName(name); field != nil {
+		t.Fatalf("field %q exists, want no field", name)
+	}
 }
 
 func TestContactMethodsMigration(t *testing.T) {

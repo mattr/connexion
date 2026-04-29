@@ -1,7 +1,6 @@
 export type Person = {
   id: string;
   name: string;
-  sort_name?: string;
   nickname?: string;
   created?: string;
   updated?: string;
@@ -9,7 +8,6 @@ export type Person = {
 
 export type PersonInput = {
   name: string;
-  sort_name?: string;
   nickname?: string;
 };
 

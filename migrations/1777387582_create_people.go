@@ -25,10 +25,6 @@ func init() {
 			Max:         255,
 		})
 		collection.Fields.Add(&core.TextField{
-			Name: people.FieldSortName,
-			Max:  255,
-		})
-		collection.Fields.Add(&core.TextField{
 			Name: people.FieldNickname,
 			Max:  255,
 		})
