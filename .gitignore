@@ -15,7 +15,7 @@ node_modules/
 /client/.vite/
 /client/.env
 /client/.env.*
-!/client/.env.example
+!/client/.env.template
 
 # Logs and temporary files
 *.log
