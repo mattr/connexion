@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/mattr/connexion/internal/contactmethods"
+	"github.com/mattr/connexion/internal/groups"
+	"github.com/mattr/connexion/internal/memberships"
 	"github.com/mattr/connexion/internal/people"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -143,6 +145,52 @@ func TestContactMethodJSONFieldNames(t *testing.T) {
 	}
 }
 
+func TestGroupJSONFieldNames(t *testing.T) {
+	t.Parallel()
+
+	group := groups.Group{ID: "group-1", Name: "2027 production orchestra", Description: "Pit musicians"}
+
+	data, err := json.Marshal(group)
+	if err != nil {
+		t.Fatalf("json.Marshal(Group) returned error: %v", err)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(Group) returned error: %v", err)
+	}
+
+	want := map[string]string{"id": "group-1", "name": "2027 production orchestra", "description": "Pit musicians"}
+	for key, wantValue := range want {
+		if got[key] != wantValue {
+			t.Fatalf("Group JSON field %q = %q, want %q", key, got[key], wantValue)
+		}
+	}
+}
+
+func TestMembershipJSONFieldNames(t *testing.T) {
+	t.Parallel()
+
+	membership := memberships.Membership{ID: "membership-1", Person: "person-1", Group: "group-1", Note: "Reed chair"}
+
+	data, err := json.Marshal(membership)
+	if err != nil {
+		t.Fatalf("json.Marshal(Membership) returned error: %v", err)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("json.Unmarshal(Membership) returned error: %v", err)
+	}
+
+	want := map[string]string{"id": "membership-1", "person": "person-1", "group": "group-1", "note": "Reed chair"}
+	for key, wantValue := range want {
+		if got[key] != wantValue {
+			t.Fatalf("Membership JSON field %q = %q, want %q", key, got[key], wantValue)
+		}
+	}
+}
+
 func TestPeopleMigration(t *testing.T) {
 	t.Parallel()
 
@@ -211,6 +259,46 @@ func TestContactMethodsMigration(t *testing.T) {
 	assertTextField(t, collection, contactmethods.FieldLabel, false)
 	assertTextFieldWithMax(t, collection, contactmethods.FieldValue, true, 5000)
 	assertAuthenticatedRules(t, collection)
+}
+
+func TestGroupsAndMembershipsMigration(t *testing.T) {
+	t.Parallel()
+
+	app := newAppWithConfig(pocketbase.Config{
+		DefaultDataDir: t.TempDir(),
+		DefaultDev:     false,
+	})
+	t.Cleanup(func() {
+		if err := app.ResetBootstrapState(); err != nil {
+			t.Errorf("ResetBootstrapState() returned error: %v", err)
+		}
+	})
+
+	if err := app.Bootstrap(); err != nil {
+		t.Fatalf("Bootstrap() returned error: %v", err)
+	}
+
+	peopleCollection, err := app.FindCollectionByNameOrId(people.CollectionName)
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(%q) returned error: %v", people.CollectionName, err)
+	}
+
+	groupsCollection, err := app.FindCollectionByNameOrId(groups.CollectionName)
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(%q) returned error: %v", groups.CollectionName, err)
+	}
+	assertTextField(t, groupsCollection, groups.FieldName, true)
+	assertTextFieldWithMax(t, groupsCollection, groups.FieldDescription, false, 5000)
+	assertAuthenticatedRules(t, groupsCollection)
+
+	membershipsCollection, err := app.FindCollectionByNameOrId(memberships.CollectionName)
+	if err != nil {
+		t.Fatalf("FindCollectionByNameOrId(%q) returned error: %v", memberships.CollectionName, err)
+	}
+	assertRelationField(t, membershipsCollection, memberships.FieldPerson, peopleCollection.Id, true)
+	assertRelationField(t, membershipsCollection, memberships.FieldGroup, groupsCollection.Id, true)
+	assertTextFieldWithMax(t, membershipsCollection, memberships.FieldNote, false, 5000)
+	assertAuthenticatedRules(t, membershipsCollection)
 }
 
 func assertAuthenticatedRules(t *testing.T, collection *core.Collection) {

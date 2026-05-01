@@ -36,3 +36,35 @@ export type AuthUser = {
   email?: string;
   name?: string;
 };
+
+export type Group = {
+  id: string;
+  name: string;
+  description?: string;
+  created?: string;
+  updated?: string;
+};
+
+export type GroupInput = {
+  name: string;
+  description?: string;
+};
+
+export type Membership = {
+  id: string;
+  person: string;
+  group: string;
+  note?: string;
+  expand?: {
+    person?: Person;
+    group?: Group;
+  };
+  created?: string;
+  updated?: string;
+};
+
+export type MembershipInput = {
+  person: string;
+  group: string;
+  note?: string;
+};

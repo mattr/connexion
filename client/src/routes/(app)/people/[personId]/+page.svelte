@@ -1,9 +1,14 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
+  import MembershipForm from '$lib/components/MembershipForm.svelte';
   import { deleteContactMethod } from '$lib/pocketbase/contact-methods';
+  import { deleteMembership, updateMembership } from '$lib/pocketbase/memberships';
+  import type { MembershipInput } from '$lib/pocketbase/types';
   import type { PageData } from './$types';
 
   export let data: PageData;
+
+  let editingMembershipId = '';
 
   async function removeContactMethod(id: string, value: string) {
     if (!window.confirm(`Delete ${value}?`)) {
@@ -11,6 +16,21 @@
     }
 
     await deleteContactMethod(id);
+    await invalidateAll();
+  }
+
+  async function saveMembership(membershipId: string, input: MembershipInput) {
+    await updateMembership(membershipId, input);
+    editingMembershipId = '';
+    await invalidateAll();
+  }
+
+  async function removeMembership(membershipId: string, groupName: string) {
+    if (!window.confirm(`Remove ${data.person.name} from ${groupName}?`)) {
+      return;
+    }
+
+    await deleteMembership(membershipId);
     await invalidateAll();
   }
 </script>
@@ -54,6 +74,40 @@
               <a class="button secondary" href={`/people/${data.person.id}/contact-methods/${method.id}/edit`}>Edit</a>
               <button class="danger" type="button" on:click={() => removeContactMethod(method.id, method.value)}>Delete</button>
             </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </article>
+
+  <article class="card stack">
+    <div class="section-title">
+      <h2>Groups</h2>
+      <a class="button" href={`/people/${data.person.id}/memberships/new`}>Add to group</a>
+    </div>
+
+    {#if data.memberships.length === 0}
+      <p class="muted">This person is not in any groups yet.</p>
+    {:else}
+      <div class="methods">
+        {#each data.memberships as membership}
+          <div class="method-row">
+            {#if editingMembershipId === membership.id}
+              <MembershipForm membership={membership} fixedPerson={data.person.id} fixedGroup={membership.group} onSubmit={(input) => saveMembership(membership.id, input)} submitLabel="Save note">
+                <button slot="actions" class="secondary" type="button" on:click={() => (editingMembershipId = '')}>Cancel</button>
+              </MembershipForm>
+            {:else}
+              <div>
+                <a href={`/groups/${membership.group}`}><strong>{membership.expand?.group?.name ?? membership.group}</strong></a>
+                {#if membership.note}
+                  <p>{membership.note}</p>
+                {/if}
+              </div>
+              <div class="actions">
+                <button class="secondary" type="button" on:click={() => (editingMembershipId = membership.id)}>Edit note</button>
+                <button class="danger" type="button" on:click={() => removeMembership(membership.id, membership.expand?.group?.name ?? 'this group')}>Remove</button>
+              </div>
+            {/if}
           </div>
         {/each}
       </div>

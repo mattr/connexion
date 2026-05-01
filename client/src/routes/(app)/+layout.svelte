@@ -7,6 +7,7 @@
     <a class="brand" href="/people">Connexion</a>
     <nav>
       <a href="/people">People</a>
+      <a href="/groups">Groups</a>
       {#if $session.user?.email}
         <span class="muted">{$session.user.email}</span>
       {/if}
