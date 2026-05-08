@@ -22,8 +22,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-COPY --from=client-build /workspace/pb_public ./pb_public
-
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/connexion .
 
 FROM alpine:3.22
