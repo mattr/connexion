@@ -6,10 +6,6 @@
 
   let query = '';
   $: filteredPeople = filterPeople(data.people, query);
-
-  function updateQuery(event: KeyboardEvent) {
-    query = event.currentTarget instanceof HTMLInputElement ? event.currentTarget.value : '';
-  }
 </script>
 
 <section class="page-header">
@@ -23,7 +19,7 @@
 {#if data.people.length > 0}
   <label class="filter card">
     Filter people
-    <input value={query} on:keyup={updateQuery} type="search" placeholder="Search by name or nickname" autocomplete="off" />
+    <input bind:value={query} type="search" placeholder="Search by name or nickname" autocomplete="off" />
   </label>
 {/if}
 
