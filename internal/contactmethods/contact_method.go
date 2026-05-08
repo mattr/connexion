@@ -22,11 +22,3 @@ var Kinds = []string{
 	KindWeb,
 	KindOther,
 }
-
-type ContactMethod struct {
-	ID     string `json:"id"`
-	Person string `json:"person"`
-	Kind   string `json:"kind"`
-	Label  string `json:"label,omitempty"`
-	Value  string `json:"value"`
-}

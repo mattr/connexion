@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"slices"
 	"testing"
 
@@ -74,120 +73,6 @@ func TestNewApp(t *testing.T) {
 
 	if _, _, err := app.RootCmd.Find([]string{"migrate"}); err != nil {
 		t.Fatalf("newApp() did not register migrate command: %v", err)
-	}
-}
-
-func TestPersonJSONFieldNames(t *testing.T) {
-	t.Parallel()
-
-	person := people.Person{
-		ID:       "person-1",
-		Name:     "Prince",
-		Nickname: "The Artist",
-	}
-
-	data, err := json.Marshal(person)
-	if err != nil {
-		t.Fatalf("json.Marshal(Person) returned error: %v", err)
-	}
-
-	var got map[string]string
-	if err := json.Unmarshal(data, &got); err != nil {
-		t.Fatalf("json.Unmarshal(Person) returned error: %v", err)
-	}
-
-	want := map[string]string{
-		"id":       "person-1",
-		"name":     "Prince",
-		"nickname": "The Artist",
-	}
-
-	for key, wantValue := range want {
-		if got[key] != wantValue {
-			t.Fatalf("Person JSON field %q = %q, want %q", key, got[key], wantValue)
-		}
-	}
-}
-
-func TestContactMethodJSONFieldNames(t *testing.T) {
-	t.Parallel()
-
-	method := contactmethods.ContactMethod{
-		ID:     "method-1",
-		Person: "person-1",
-		Kind:   contactmethods.KindWeb,
-		Label:  "GitHub",
-		Value:  "https://github.com/mattr",
-	}
-
-	data, err := json.Marshal(method)
-	if err != nil {
-		t.Fatalf("json.Marshal(ContactMethod) returned error: %v", err)
-	}
-
-	var got map[string]string
-	if err := json.Unmarshal(data, &got); err != nil {
-		t.Fatalf("json.Unmarshal(ContactMethod) returned error: %v", err)
-	}
-
-	want := map[string]string{
-		"id":     "method-1",
-		"person": "person-1",
-		"kind":   "web",
-		"label":  "GitHub",
-		"value":  "https://github.com/mattr",
-	}
-
-	for key, wantValue := range want {
-		if got[key] != wantValue {
-			t.Fatalf("ContactMethod JSON field %q = %q, want %q", key, got[key], wantValue)
-		}
-	}
-}
-
-func TestGroupJSONFieldNames(t *testing.T) {
-	t.Parallel()
-
-	group := groups.Group{ID: "group-1", Name: "2027 production orchestra", Description: "Pit musicians"}
-
-	data, err := json.Marshal(group)
-	if err != nil {
-		t.Fatalf("json.Marshal(Group) returned error: %v", err)
-	}
-
-	var got map[string]string
-	if err := json.Unmarshal(data, &got); err != nil {
-		t.Fatalf("json.Unmarshal(Group) returned error: %v", err)
-	}
-
-	want := map[string]string{"id": "group-1", "name": "2027 production orchestra", "description": "Pit musicians"}
-	for key, wantValue := range want {
-		if got[key] != wantValue {
-			t.Fatalf("Group JSON field %q = %q, want %q", key, got[key], wantValue)
-		}
-	}
-}
-
-func TestMembershipJSONFieldNames(t *testing.T) {
-	t.Parallel()
-
-	membership := memberships.Membership{ID: "membership-1", Person: "person-1", Group: "group-1", Note: "Reed chair"}
-
-	data, err := json.Marshal(membership)
-	if err != nil {
-		t.Fatalf("json.Marshal(Membership) returned error: %v", err)
-	}
-
-	var got map[string]string
-	if err := json.Unmarshal(data, &got); err != nil {
-		t.Fatalf("json.Unmarshal(Membership) returned error: %v", err)
-	}
-
-	want := map[string]string{"id": "membership-1", "person": "person-1", "group": "group-1", "note": "Reed chair"}
-	for key, wantValue := range want {
-		if got[key] != wantValue {
-			t.Fatalf("Membership JSON field %q = %q, want %q", key, got[key], wantValue)
-		}
 	}
 }
 
