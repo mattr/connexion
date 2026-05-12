@@ -4,6 +4,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/pocketbase/pocketbase/tools/dbutils"
+
 	"github.com/mattr/connexion/internal/contactmethods"
 	"github.com/mattr/connexion/internal/groups"
 	"github.com/mattr/connexion/internal/memberships"
@@ -183,7 +185,27 @@ func TestGroupsAndMembershipsMigration(t *testing.T) {
 	assertRelationField(t, membershipsCollection, memberships.FieldPerson, peopleCollection.Id, true)
 	assertRelationField(t, membershipsCollection, memberships.FieldGroup, groupsCollection.Id, true)
 	assertTextFieldWithMax(t, membershipsCollection, memberships.FieldNote, false, 5000)
+	assertUniqueIndex(t, membershipsCollection, memberships.IndexUniquePersonGroup, memberships.FieldPerson, memberships.FieldGroup)
 	assertAuthenticatedRules(t, membershipsCollection)
+}
+
+func assertUniqueIndex(t *testing.T, collection *core.Collection, name string, columns ...string) {
+	t.Helper()
+
+	index := dbutils.ParseIndex(collection.GetIndex(name))
+	if !index.Unique {
+		t.Fatalf("index %q Unique = false, want true", name)
+	}
+
+	if len(index.Columns) != len(columns) {
+		t.Fatalf("index %q has %d columns, want %d", name, len(index.Columns), len(columns))
+	}
+
+	for i, column := range columns {
+		if index.Columns[i].Name != column {
+			t.Fatalf("index %q column %d = %q, want %q", name, i, index.Columns[i].Name, column)
+		}
+	}
 }
 
 func assertAuthenticatedRules(t *testing.T, collection *core.Collection) {
