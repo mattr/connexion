@@ -1,43 +1,48 @@
-app = "connexion"
-kill_signal = "SIGINT"
-kill_timeout = "5s"
-primary_region = "syd"
+# fly.toml app configuration file generated for connexion on 2026-06-11T01:29:16+09:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'connexion'
+primary_region = 'syd'
+kill_signal = 'SIGINT'
+kill_timeout = '5s'
 
 [build]
-dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
-[build.args]
-PUBLIC_POCKETBASE_URL = "https://connexion.fly.dev"
+  [build.args]
+    PUBLIC_POCKETBASE_URL = 'https://connexion.fly.dev'
 
 [env]
-PUBLIC_POCKETBASE_URL = "https://connexion.fly.dev"
-
-[http_service]
-auto_start_machines = true
-auto_stop_machines = true
-force_https = true
-internal_port = 8_080
-min_machines_running = 0
-processes = [ "app" ]
-
-[[http_service.checks]]
-grace_period = "10s"
-interval = "30s"
-method = "GET"
-path = "/api/health"
-timeout = "5s"
-
-[http_service.concurrency]
-hard_limit = 100
-soft_limit = 50
-type = "requests"
+  PUBLIC_POCKETBASE_URL = 'https://connexion.fly.dev'
 
 [[mounts]]
-destination = "/data"
-initial_size = "1gb"
-snapshot_retention = 7
-source = "connexion_data"
+  source = 'connexion_data'
+  destination = '/data'
+  initial_size = '1gb'
+  snapshot_retention = 7
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'requests'
+    hard_limit = 100
+    soft_limit = 50
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/api/health'
 
 [[vm]]
-memory = "256mb"
-size = "shared-cpu-1x"
+  size = 'shared-cpu-1x'
+  memory = '256mb'
